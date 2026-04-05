@@ -1,7 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Users, Activity, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Users, Activity, DollarSign, Wallet, BarChart3 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useStore } from '@/stores/store';
+import { useWalletStore } from '@/stores/walletStore';
+import { useTrading } from '@/hooks/useTrading';
 
 const container = {
   hidden: { opacity: 0 },
@@ -17,15 +20,19 @@ const item = {
 };
 
 export default function Dashboard() {
-  const { traders, positions, trades } = useStore();
+  const { traders, trades } = useStore();
+  const { balances, positions, totalPnl } = useWalletStore();
+  const { getBalance } = useTrading();
+  
+  const usdtBalance = getBalance('USDT');
   const followingTraders = traders.filter(t => t.isFollowing);
-  const totalPnl = positions.reduce((sum, p) => sum + p.unrealizedPnl, 0);
+  const unrealizedPnl = positions.reduce((sum, p) => sum + p.unrealizedPnl, 0);
   
   const stats = [
-    { label: 'Portfolio Value', value: '$12,458.32', change: '+12.45%', positive: true, icon: DollarSign },
-    { label: 'Total PnL', value: `$${totalPnl.toFixed(2)}`, change: totalPnl >= 0 ? '+8.2%' : '-3.1%', positive: totalPnl >= 0, icon: totalPnl >= 0 ? TrendingUp : TrendingDown },
+    { label: 'Portfolio Value', value: `$${(usdtBalance + unrealizedPnl).toFixed(2)}`, change: '+12.45%', positive: true, icon: DollarSign },
+    { label: 'Total PnL', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, change: totalPnl >= 0 ? '+8.2%' : '-3.1%', positive: totalPnl >= 0, icon: totalPnl >= 0 ? TrendingUp : TrendingDown },
     { label: 'Active Copiers', value: followingTraders.length.toString(), change: '+2 today', positive: true, icon: Users },
-    { label: 'Copy Volume', value: '$45,231', change: '+23.5%', positive: true, icon: Activity },
+    { label: 'Open Positions', value: positions.length.toString(), change: `${positions.length > 0 ? 'Active' : 'None'}`, positive: positions.length > 0, icon: Activity },
   ];
 
   return (
@@ -49,7 +56,7 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between mb-2">
               <stat.icon className={`w-4 h-4 ${stat.positive ? 'text-[#00ff88]' : 'text-[#ff3366]'}`} />
-              <span className={`text-xs font-mono ${stat.positive ? 'text-[#00ff88]' : 'text-[#ff33666]'}`}>
+              <span className={`text-xs font-mono ${stat.positive ? 'text-[#00ff88]' : 'text-[#ff3366]'}`}>
                 {stat.change}
               </span>
             </div>
@@ -62,7 +69,82 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <motion.div variants={item} className="hl-card p-4">
           <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-white">Wallet</h2>
+            <Link to="/trade" className="text-xs text-[#00d4ff] hover:underline">Trade →</Link>
+          </div>
+          <div className="space-y-2">
+            {balances.filter(b => b.free > 0).map((balance) => (
+              <div key={balance.asset} className="flex items-center justify-between py-2 border-b border-[#2a2a2e] last:border-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-[#1f1f24] flex items-center justify-center text-white text-xs font-medium">
+                    {balance.asset.slice(0, 2)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">{balance.asset}</p>
+                    <p className="text-xs text-[#666]">{balance.asset === 'USDT' ? 'USDT Balance' : 'Asset Balance'}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-mono font-medium text-white">
+                    {balance.asset === 'USDT' ? '$' : ''}{balance.free.toFixed(balance.asset === 'USDT' ? 2 : 4)}
+                  </p>
+                  {balance.locked > 0 && (
+                    <p className="text-xs text-[#666]">Locked: {balance.locked.toFixed(2)}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div variants={item} className="hl-card p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-white">Open Positions</h2>
+            <Link to="/positions" className="text-xs text-[#00d4ff] hover:underline">View All →</Link>
+          </div>
+          {positions.length === 0 ? (
+            <div className="text-center py-8">
+              <BarChart3 className="w-8 h-8 text-[#333] mx-auto mb-2" />
+              <p className="text-sm text-[#666]">No open positions</p>
+              <Link to="/trade" className="text-xs text-[#00d4ff] hover:underline mt-1 inline-block">Start Trading</Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {positions.slice(0, 3).map((pos) => (
+                <div key={pos.id} className="flex items-center justify-between p-2 bg-[#0a0a0b] rounded">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-6 h-6 rounded flex items-center justify-center ${
+                      pos.side === 'LONG' ? 'bg-[#00ff88]/10' : 'bg-[#ff3366]/10'
+                    }`}>
+                      {pos.side === 'LONG' ? (
+                        <TrendingUp className="w-3 h-3 text-[#00ff88]" />
+                      ) : (
+                        <TrendingDown className="w-3 h-3 text-[#ff3366]" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">{pos.symbol.replace('USDT', '')}</p>
+                      <p className="text-xs text-[#666]">{pos.side} × {pos.quantity}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-sm font-mono ${pos.unrealizedPnl >= 0 ? 'text-[#00ff88]' : 'text-[#ff3366]'}`}>
+                      {pos.unrealizedPnl >= 0 ? '+' : ''}${pos.unrealizedPnl.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-[#666]">{pos.unrealizedPnlPercent.toFixed(2)}%</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <motion.div variants={item} className="hl-card p-4">
+          <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-white">Top Traders</h2>
+            <Link to="/trades" className="text-xs text-[#00d4ff] hover:underline">View All →</Link>
           </div>
           <div className="space-y-2">
             {traders.slice(0, 5).map((trader, i) => (
@@ -88,14 +170,19 @@ export default function Dashboard() {
         <motion.div variants={item} className="hl-card p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-white">Recent Trades</h2>
+            <Link to="/history" className="text-xs text-[#00d4ff] hover:underline">View All →</Link>
           </div>
           <div className="space-y-2">
             {trades.slice(0, 6).map((trade, i) => (
               <div key={trade.id || i} className="flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors">
                 <div className={`w-8 h-8 rounded flex items-center justify-center ${
-                  trade.side === 'Long' ? 'bg-[#00ff88]/10 text-[#00ff88]' : 'bg-[#ff3366]/10 text-[#ff3366]'
+                  trade.side === 'Long' || trade.side === 'BUY' ? 'bg-[#00ff88]/10 text-[#00ff88]' : 'bg-[#ff3366]/10 text-[#ff3366]'
                 }`}>
-                  {trade.side === 'Long' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                  {trade.side === 'Long' || trade.side === 'BUY' ? (
+                    <TrendingUp className="w-4 h-4" />
+                  ) : (
+                    <TrendingDown className="w-4 h-4" />
+                  )}
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-white">
@@ -113,47 +200,6 @@ export default function Dashboard() {
           </div>
         </motion.div>
       </div>
-
-      <motion.div variants={item} className="hl-card p-4">
-        <h2 className="text-sm font-medium text-white mb-4">Your Positions</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="table-header">
-                <th className="text-left table-cell">Asset</th>
-                <th className="text-left table-cell">Side</th>
-                <th className="text-right table-cell">Size</th>
-                <th className="text-right table-cell">Entry</th>
-                <th className="text-right table-cell">Current</th>
-                <th className="text-right table-cell">PnL</th>
-              </tr>
-            </thead>
-            <tbody>
-              {positions.map((pos) => (
-                <tr key={pos.id} className="border-t border-[#2a2a2e] hover:bg-white/5">
-                  <td className="table-cell font-medium text-white">{pos.asset}</td>
-                  <td className={`table-cell ${pos.side === 'Long' ? 'text-[#00ff88]' : 'text-[#ff3366]'}`}>
-                    {pos.side}
-                  </td>
-                  <td className="table-cell text-right font-mono">{pos.size}</td>
-                  <td className="table-cell text-right font-mono text-[#999]">${pos.entryPrice.toFixed(2)}</td>
-                  <td className="table-cell text-right font-mono text-white">${pos.currentPrice.toFixed(2)}</td>
-                  <td className={`table-cell text-right font-mono ${pos.unrealizedPnl >= 0 ? 'text-[#00ff88]' : 'text-[#ff3366]'}`}>
-                    {pos.unrealizedPnl >= 0 ? '+' : ''}{pos.pnlPercent.toFixed(2)}%
-                  </td>
-                </tr>
-              ))}
-              {positions.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="table-cell text-center text-[#666] py-8">
-                    No open positions
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </motion.div>
     </motion.div>
   );
 }
