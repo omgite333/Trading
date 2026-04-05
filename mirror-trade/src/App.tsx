@@ -31,7 +31,7 @@ function AppContent() {
     if (traders.length === 0) {
       initMockData();
     }
-  }, []);
+  }, [initMockData, traders.length]);
 
   return (
     <AnimatePresence mode="wait">

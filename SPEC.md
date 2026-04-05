@@ -2,13 +2,11 @@
 
 ## Concept & Vision
 
-A sleek, professional copy-trading platform that bridges elite Hyperliquid traders with retail users. The interface channels the aesthetic of Bloomberg Terminal meets Cyberpunk — data-dense but visually striking with real-time pulse animations that make the trading floor feel alive.
+A sleek, professional copy-trading platform that bridges elite Hyperliquid traders with retail users. The interface channels the aesthetic of Bloomberg Terminal meets Cyberpunk — data-dense but visually striking with real-time pulse animations.
 
-## Current Status
+## Completed Features
 
-### Completed Features
-
-#### Core Pages (10 pages)
+### Core Pages (10 pages)
 - [x] **Dashboard** - Overview with stats, top traders, recent activity
 - [x] **Trades** - Copy trading interface with trader selection
 - [x] **TradePage** - Full trading interface with charts, order book, quick trade
@@ -19,23 +17,25 @@ A sleek, professional copy-trading platform that bridges elite Hyperliquid trade
 - [x] **Calculator** - Position sizing calculator with risk management
 - [x] **Settings** - User preferences and configuration
 
-#### Technical Features
+### Technical Features
 - [x] **Binance API Integration** - Real-time price data, klines, orderbook, trades
 - [x] **TradingView-style Charts** - Candlestick charts with lightweight-charts library
 - [x] **Technical Indicators** - MA, EMA, Bollinger Bands, RSI
+- [x] **Hyperliquid API Client** - Full API integration with React Query
+- [x] **Wallet Connection** - MetaMask integration with chain switching
 - [x] **State Management** - Zustand with localStorage persistence
 - [x] **Theme Toggle** - Dark/Light mode support
 - [x] **Mock Data Generation** - For traders, trades, positions
 
-#### Components
-- Layout with collapsible sidebar
-- Header with search, theme toggle, notifications
-- Price ticker bar
-- Wallet button
-- Notification center
-- Glass morphism UI cards
-- Theme toggle
-- Skeleton loaders
+### Components
+- [x] Layout with collapsible sidebar
+- [x] Header with search, theme toggle, notifications
+- [x] Price ticker bar
+- [x] Wallet button with MetaMask integration
+- [x] Notification center
+- [x] Glass morphism UI cards
+- [x] Theme toggle
+- [x] Skeleton loaders
 
 ## Technical Stack
 
@@ -59,6 +59,26 @@ Node.js + Express
 ├── WebSocket (real-time updates)
 └── Binance Proxy (CORS bypass)
 ```
+
+## API Integration
+
+### Hyperliquid API (`https://api.hyperliquid.xyz/info`)
+- `POST { type: "leaderboard" }` - Top traders
+- `POST { type: "allMids" }` - Current prices
+- `POST { type: "userFills" }` - User trade history
+- `POST { type: "assetList" }` - Available assets
+- `POST { type: "meta" }` - Trading pair metadata
+- `POST { type: "accountSummary" }` - Account data
+- `POST { type: "openOrders" }` - User open orders
+- WebSocket for real-time fills
+
+### Binance API (`https://api.binance.com/api/v3`)
+- `/ticker/24hr` - 24h ticker stats
+- `/klines` - Candlestick data
+- `/depth` - Order book
+- `/trades` - Recent trades
+- `/exchangeInfo` - Trading pairs
+- WebSocket streams for real-time updates
 
 ## File Structure
 
@@ -91,6 +111,8 @@ Node.js + Express
 │   │   ├── store.ts
 │   │   └── themeStore.ts
 │   ├── hooks/
+│   │   ├── useHyperliquid.ts
+│   │   ├── useWallet.ts
 │   │   └── ...
 │   ├── types/
 │   │   └── index.ts
@@ -107,19 +129,18 @@ Node.js + Express
 ## Next Steps
 
 ### High Priority
-1. [ ] Hyperliquid real API integration
-2. [ ] Real wallet connection (MetaMask/WalletConnect)
-3. [ ] Order execution functionality
-4. [ ] WebSocket real-time updates
+- [ ] Order execution functionality (Hyperliquid exchange API)
+- [ ] WebSocket real-time updates for fills
+- [ ] Copy trading simulation engine
 
 ### Medium Priority
-1. [ ] More technical indicators (MACD, VWAP, ATR)
-2. [ ] Price alerts and notifications
-3. [ ] Trade copying simulation
-4. [ ] Performance optimizations
+- [ ] More technical indicators (MACD, VWAP, ATR)
+- [ ] Price alerts and notifications
+- [ ] Performance optimizations
+- [ ] Trade history export
 
 ### Low Priority
-1. [ ] Mobile responsive design improvements
-2. [ ] Keyboard shortcuts
-3. [ ] Export functionality (CSV, PDF)
-4. [ ] Dark/Light mode toggle animations
+- [ ] Mobile responsive design improvements
+- [ ] Keyboard shortcuts
+- [ ] Dark/Light mode toggle animations
+- [ ] Trading signals alerts

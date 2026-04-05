@@ -11,6 +11,7 @@ interface AppState {
   traderSettings: Record<string, TraderSettings>;
   isConnected: boolean;
   walletAddress: string | null;
+  notifications: Notification[];
   
   setTraders: (traders: Trader[]) => void;
   setTrades: (trades: Trade[]) => void;
@@ -22,10 +23,22 @@ interface AppState {
   setUserSettings: (settings: Partial<UserSettings>) => void;
   setTraderSettings: (traderId: string, settings: Partial<TraderSettings>) => void;
   
-  connectWallet: () => void;
+  connectWallet: (address?: string) => void;
   disconnectWallet: () => void;
   
   initMockData: () => void;
+  addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => void;
+  removeNotification: (id: string) => void;
+  clearNotifications: () => void;
+}
+
+interface Notification {
+  id: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  title: string;
+  message: string;
+  timestamp: number;
+  read: boolean;
 }
 
 export const useStore = create<AppState>()(
@@ -38,6 +51,7 @@ export const useStore = create<AppState>()(
       traderSettings: {},
       isConnected: false,
       walletAddress: null,
+      notifications: [],
       
       setTraders: (traders) => set({ traders }),
       
@@ -69,7 +83,7 @@ export const useStore = create<AppState>()(
         traderSettings: {
           ...state.traderSettings,
           [traderId]: {
-            ...state.userSettings,
+            ...defaultUserSettings,
             ...state.traderSettings[traderId],
             ...settings,
             traderId,
@@ -77,9 +91,15 @@ export const useStore = create<AppState>()(
         },
       })),
       
-      connectWallet: () => set({ isConnected: true, walletAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f8E2d1' }),
+      connectWallet: (address = '0x742d35Cc6634C0532925a3b844Bc9e7595f8E2d1') => set({ 
+        isConnected: true, 
+        walletAddress: address 
+      }),
       
-      disconnectWallet: () => set({ isConnected: false, walletAddress: null }),
+      disconnectWallet: () => set({ 
+        isConnected: false, 
+        walletAddress: null 
+      }),
       
       initMockData: () => {
         const traders = generateMockTraders();
@@ -87,6 +107,24 @@ export const useStore = create<AppState>()(
         const positions = generateMockPositions();
         set({ traders, trades, positions });
       },
+      
+      addNotification: (notification) => set((state) => ({
+        notifications: [
+          {
+            ...notification,
+            id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            timestamp: Date.now(),
+            read: false,
+          },
+          ...state.notifications,
+        ].slice(0, 50),
+      })),
+      
+      removeNotification: (id) => set((state) => ({
+        notifications: state.notifications.filter(n => n.id !== id),
+      })),
+      
+      clearNotifications: () => set({ notifications: [] }),
     }),
     {
       name: 'mirror-trade-storage',
@@ -94,6 +132,7 @@ export const useStore = create<AppState>()(
         userSettings: state.userSettings,
         traderSettings: state.traderSettings,
         traders: state.traders,
+        notifications: state.notifications,
       }),
     }
   )

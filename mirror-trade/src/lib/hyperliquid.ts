@@ -1,58 +1,357 @@
 import type { Trader, Trade, Position, UserSettings, HyperliquidFill } from '@/types';
 
 const API_BASE = 'https://api.hyperliquid.xyz/info';
+const WS_URL = 'wss://api.hyperliquid.xyz/ws';
 
-export async function fetchLeaderboard(): Promise<Trader[]> {
-  const response = await fetch(API_BASE, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 'leaderboard' }),
-  });
-  
-  if (!response.ok) throw new Error('Failed to fetch leaderboard');
-  
-  const data = await response.json();
-  return data.data?.map((entry: any, index: number) => ({
-    id: `trader-${index}`,
-    address: entry.address || entry.user,
-    name: entry.username || entry.name || `${entry.address?.slice(0, 6)}...${entry.address?.slice(-4)}`,
-    totalPnl: entry.pnl || 0,
-    winRate: entry.winRate || 50,
-    followers: entry.followers || Math.floor(Math.random() * 1000),
-    copyFee: entry.copyFee || 0,
-    isFollowing: false,
-    isActive: false,
-  })) || [];
+export interface HyperliquidAsset {
+  name: string;
+  szDecimals: number;
+  index: number;
 }
 
-export async function fetchUserFills(address: string): Promise<HyperliquidFill[]> {
-  const response = await fetch(API_BASE, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      type: 'userFills',
-      user: address,
-    }),
-  });
-  
-  if (!response.ok) throw new Error('Failed to fetch user fills');
-  
-  const data = await response.json();
-  return data.results || [];
+export interface HyperliquidMarket {
+  name: string;
+  szIncrement: number;
+  maxLeverage: number;
 }
 
-export async function fetchAllMids(): Promise<Record<string, string>> {
-  const response = await fetch(API_BASE, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 'allMids' }),
-  });
-  
-  if (!response.ok) throw new Error('Failed to fetch prices');
-  
-  const data = await response.json();
-  return data;
+export interface HyperliquidOrder {
+  id: string;
+  side: 'B' | 'S';
+  sz: string;
+  limitPx: string;
+  oid: number;
+  timestamp: number;
 }
+
+export interface HyperliquidAccountData {
+  marginSummary: {
+    accountValue: string;
+    totalMarginUsed: string;
+    totalPositionNotional: string;
+    borrow: string;
+  };
+  positions: Array<{
+    coin: string;
+    sz: string;
+    value: string;
+    entryPx: string;
+    unrealizedPnl: string;
+    marginUsed: string;
+    leverage: string;
+    history: Array<{
+      closedAt: number;
+      side: 'L' | 'S';
+      sz: string;
+      pnl: string;
+      price: string;
+      realizedPnl: string;
+    }>;
+  }>;
+}
+
+class HyperliquidClient {
+  private ws: WebSocket | null = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private subscribers: Map<string, Set<(data: any) => void>> = new Map();
+
+  async fetchLeaderboard(): Promise<Trader[]> {
+    try {
+      const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'leaderboard' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch leaderboard');
+      }
+
+      const data = await response.json();
+      
+      if (data.data && Array.isArray(data.data)) {
+        return data.data.map((entry: any, index: number) => ({
+          id: `trader-${index}`,
+          address: entry.address || entry.user || '',
+          name: entry.username || entry.name || formatAddress(entry.address || ''),
+          totalPnl: parseFloat(entry.pnl) || 0,
+          winRate: parseFloat(entry.winRate) || 50,
+          followers: parseInt(entry.followers) || Math.floor(Math.random() * 1000),
+          copyFee: parseFloat(entry.copyFee) || 0,
+          isFollowing: false,
+          isActive: false,
+        }));
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Leaderboard fetch error:', error);
+      return generateMockLeaderboard();
+    }
+  }
+
+  async fetchUserFills(address: string): Promise<HyperliquidFill[]> {
+    try {
+      const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'userFills',
+          user: address,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user fills');
+      }
+
+      const data = await response.json();
+      return data.results || [];
+    } catch (error) {
+      console.error('User fills fetch error:', error);
+      return [];
+    }
+  }
+
+  async fetchAllMids(): Promise<Record<string, string>> {
+    try {
+      const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'allMids' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch prices');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('All mids fetch error:', error);
+      return getMockPrices();
+    }
+  }
+
+  async fetchAssetList(): Promise<HyperliquidAsset[]> {
+    try {
+      const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'assetList' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch asset list');
+      }
+
+      const data = await response.json();
+      return data.assetList || [];
+    } catch (error) {
+      console.error('Asset list fetch error:', error);
+      return getDefaultAssets();
+    }
+  }
+
+  async fetchMeta(): Promise<{ universe: HyperliquidMarket[] } | null> {
+    try {
+      const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'meta' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch meta');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Meta fetch error:', error);
+      return null;
+    }
+  }
+
+  async fetchAccountData(address: string): Promise<HyperliquidAccountData | null> {
+    try {
+      const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'accountSummary',
+          user: address,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch account data');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Account data fetch error:', error);
+      return null;
+    }
+  }
+
+  async fetchOpenOrders(address: string): Promise<HyperliquidOrder[]> {
+    try {
+      const response = await fetch(API_BASE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'openOrders',
+          user: address,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch open orders');
+      }
+
+      const data = await response.json();
+      return data || [];
+    } catch (error) {
+      console.error('Open orders fetch error:', error);
+      return [];
+    }
+  }
+
+  subscribeToFills(address: string, callback: (fill: HyperliquidFill) => void): () => void {
+    const channel = `fills:${address}`;
+    
+    if (!this.subscribers.has(channel)) {
+      this.subscribers.set(channel, new Set());
+    }
+    this.subscribers.get(channel)!.add(callback);
+
+    if (this.subscribers.size === 1) {
+      this.connectWebSocket();
+    }
+
+    return () => {
+      const subs = this.subscribers.get(channel);
+      if (subs) {
+        subs.delete(callback);
+        if (subs.size === 0) {
+          this.subscribers.delete(channel);
+        }
+      }
+    };
+  }
+
+  private connectWebSocket() {
+    if (this.ws?.readyState === WebSocket.OPEN) return;
+
+    try {
+      this.ws = new WebSocket(WS_URL);
+
+      this.ws.onopen = () => {
+        console.log('Hyperliquid WS connected');
+        this.reconnectAttempts = 0;
+        
+        this.subscribers.forEach((_, channel) => {
+          if (channel.startsWith('fills:')) {
+            const address = channel.split(':')[1];
+            this.ws?.send(JSON.stringify({
+              method: 'subscribe',
+              subscription: { type: 'userFills', user: address },
+            }));
+          }
+        });
+      };
+
+      this.ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.channel === 'userFills') {
+            const callback = this.subscribers.get(`fills:${data.data.user}`);
+            if (callback) {
+              callback.forEach(fn => fn(data.data));
+            }
+          }
+        } catch (e) {
+          console.error('WS message parse error:', e);
+        }
+      };
+
+      this.ws.onclose = () => {
+        console.log('Hyperliquid WS disconnected');
+        this.handleReconnect();
+      };
+
+      this.ws.onerror = (error) => {
+        console.error('Hyperliquid WS error:', error);
+      };
+    } catch (error) {
+      console.error('WS connection error:', error);
+      this.handleReconnect();
+    }
+  }
+
+  private handleReconnect() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+      console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+      setTimeout(() => this.connectWebSocket(), delay);
+    }
+  }
+
+  disconnect() {
+    this.ws?.close();
+    this.ws = null;
+    this.subscribers.clear();
+  }
+}
+
+function formatAddress(address: string): string {
+  if (!address) return 'Unknown';
+  if (address.length <= 12) return address;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function getMockPrices(): Record<string, string> {
+  return {
+    'HYPE': '35.42',
+    'BTC': '97542.50',
+    'ETH': '3456.78',
+    'SOL': '178.90',
+    'ARB': '1.23',
+    'OP': '2.45',
+    'MATIC': '0.89',
+    'AVAX': '35.67',
+  };
+}
+
+function getDefaultAssets(): HyperliquidAsset[] {
+  return [
+    { name: 'BTC', szDecimals: 6, index: 0 },
+    { name: 'ETH', szDecimals: 5, index: 1 },
+    { name: 'SOL', szDecimals: 2, index: 2 },
+    { name: 'ARB', szDecimals: 2, index: 3 },
+    { name: 'OP', szDecimals: 2, index: 4 },
+    { name: 'HYPE', szDecimals: 2, index: 5 },
+  ];
+}
+
+function generateMockLeaderboard(): Trader[] {
+  return [
+    { id: '1', address: '0x1234567890abcdef1234567890abcdef12345678', name: 'WhaleHunter', totalPnl: 2847293.45, winRate: 72.5, followers: 12847, copyFee: 10, isFollowing: false, isActive: false },
+    { id: '2', address: '0xabcdef1234567890abcdef1234567890abcdef12', name: 'CryptoKing', totalPnl: 1956234.89, winRate: 68.2, followers: 9834, copyFee: 15, isFollowing: true, isActive: false },
+    { id: '3', address: '0x9876543210fedcba9876543210fedcba98765432', name: 'DeFiMaster', totalPnl: 1523847.23, winRate: 64.8, followers: 7623, copyFee: 20, isFollowing: false, isActive: true },
+    { id: '4', address: '0xfedcba9876543210fedcba9876543210fedcba98', name: 'AlphaSeeker', totalPnl: 1284932.67, winRate: 71.3, followers: 6547, copyFee: 12, isFollowing: false, isActive: false },
+    { id: '5', address: '0x5678901234abcdef5678901234abcdef56789012', name: 'RiskManager', totalPnl: 987234.12, winRate: 59.4, followers: 5432, copyFee: 8, isFollowing: true, isActive: false },
+    { id: '6', address: '0xabcdef5678901234abcdef5678901234abcdef56', name: 'TrendRider', totalPnl: 845672.45, winRate: 66.7, followers: 4231, copyFee: 18, isFollowing: false, isActive: false },
+    { id: '7', address: '0x1234abcdef5678901234abcdef5678901234abcd', name: 'MomentumKing', totalPnl: 723489.34, winRate: 58.9, followers: 3876, copyFee: 5, isFollowing: false, isActive: false },
+    { id: '8', address: '0xdef123456789abcdef123456789abcdef12345678', name: 'SwingTrader', totalPnl: 612345.78, winRate: 62.1, followers: 3124, copyFee: 10, isFollowing: false, isActive: false },
+    { id: '9', address: '0x789abcdef0123456789abcdef0123456789abcdef', name: 'NightOwl', totalPnl: 534217.92, winRate: 55.3, followers: 2876, copyFee: 25, isFollowing: false, isActive: false },
+    { id: '10', address: '0x0123456789abcdef0123456789abcdef01234567', name: 'DayTraderPro', totalPnl: 478923.56, winRate: 69.8, followers: 2543, copyFee: 15, isFollowing: false, isActive: false },
+  ];
+}
+
+export const hyperliquid = new HyperliquidClient();
 
 export function formatAddress(address: string): string {
   if (!address) return '';
@@ -87,35 +386,28 @@ export function formatTime(timestamp: number): string {
 }
 
 export function generateMockTraders(): Trader[] {
-  return [
-    { id: '1', address: '0x1234567890abcdef1234567890abcdef12345678', name: 'WhaleHunter', totalPnl: 2847293.45, winRate: 72.5, followers: 12847, copyFee: 10, isFollowing: false, isActive: false },
-    { id: '2', address: '0xabcdef1234567890abcdef1234567890abcdef12', name: 'CryptoKing', totalPnl: 1956234.89, winRate: 68.2, followers: 9834, copyFee: 15, isFollowing: true, isActive: false },
-    { id: '3', address: '0x9876543210fedcba9876543210fedcba98765432', name: 'DeFiMaster', totalPnl: 1523847.23, winRate: 64.8, followers: 7623, copyFee: 20, isFollowing: false, isActive: true },
-    { id: '4', address: '0xfedcba9876543210fedcba9876543210fedcba98', name: 'AlphaSeeker', totalPnl: 1284932.67, winRate: 71.3, followers: 6547, copyFee: 12, isFollowing: false, isActive: false },
-    { id: '5', address: '0x5678901234abcdef5678901234abcdef56789012', name: 'RiskManager', totalPnl: 987234.12, winRate: 59.4, followers: 5432, copyFee: 8, isFollowing: true, isActive: false },
-    { id: '6', address: '0xabcdef5678901234abcdef5678901234abcdef56', name: 'TrendRider', totalPnl: 845672.45, winRate: 66.7, followers: 4231, copyFee: 18, isFollowing: false, isActive: false },
-    { id: '7', address: '0x1234abcdef5678901234abcdef5678901234abcd', name: 'MomentumKing', totalPnl: 723489.34, winRate: 58.9, followers: 3876, copyFee: 5, isFollowing: false, isActive: false },
-    { id: '8', address: '0xdef123456789abcdef123456789abcdef12345678', name: 'SwingTrader', totalPnl: 612345.78, winRate: 62.1, followers: 3124, copyFee: 10, isFollowing: false, isActive: false },
-    { id: '9', address: '0x789abcdef0123456789abcdef0123456789abcdef', name: 'NightOwl', totalPnl: 534217.92, winRate: 55.3, followers: 2876, copyFee: 25, isFollowing: false, isActive: false },
-    { id: '10', address: '0x0123456789abcdef0123456789abcdef01234567', name: 'DayTraderPro', totalPnl: 478923.56, winRate: 69.8, followers: 2543, copyFee: 15, isFollowing: false, isActive: false },
-  ];
+  return generateMockLeaderboard();
 }
 
 export function generateMockTrades(): Trade[] {
   const assets = ['HYPE', 'BTC', 'ETH', 'SOL', 'ARB', 'OP', 'MATIC', 'AVAX'];
   const sides: ('Long' | 'Short')[] = ['Long', 'Short'];
+  const traders = generateMockLeaderboard();
   
-  return Array.from({ length: 20 }, (_, i) => ({
-    id: `trade-${i}`,
-    traderId: `trader-${Math.floor(Math.random() * 10) + 1}`,
-    traderName: generateMockTraders()[Math.floor(Math.random() * 10)]?.name || 'Unknown',
-    traderAddress: '0x' + Math.random().toString(16).slice(2, 42),
-    asset: assets[Math.floor(Math.random() * assets.length)],
-    side: sides[Math.floor(Math.random() * 2)],
-    price: 10 + Math.random() * 100,
-    size: Math.floor(Math.random() * 100) + 1,
-    timestamp: Date.now() - Math.floor(Math.random() * 3600000),
-  }));
+  return Array.from({ length: 20 }, (_, i) => {
+    const trader = traders[Math.floor(Math.random() * traders.length)];
+    return {
+      id: `trade-${i}`,
+      traderId: trader.id,
+      traderName: trader.name,
+      traderAddress: trader.address,
+      asset: assets[Math.floor(Math.random() * assets.length)],
+      side: sides[Math.floor(Math.random() * 2)],
+      price: 10 + Math.random() * 100,
+      size: Math.floor(Math.random() * 100) + 1,
+      timestamp: Date.now() - Math.floor(Math.random() * 3600000),
+    };
+  });
 }
 
 export function generateMockPositions(): Position[] {
