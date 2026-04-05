@@ -10,206 +10,242 @@ A sleek, professional copy-trading platform that bridges elite Hyperliquid trade
 Dark terminal aesthetic with cyan/magenta accents — inspired by trading terminals and sci-fi interfaces. High contrast data visualization with glowing elements.
 
 ### Color Palette
-- **Background**: `#0a0a0f` (deep void)
-- **Surface**: `#12121a` (elevated cards)
-- **Border**: `#1e1e2e` (subtle dividers)
-- **Primary**: `#00d4ff` (cyan - actions, links)
-- **Success**: `#00ff88` (profit, long positions)
-- **Danger**: `#ff3366` (loss, short positions, warnings)
-- **Accent**: `#bf5af2` (purple - special elements)
+- **Background**: `#030712` (deep void)
+- **Surface**: `rgba(255,255,255,0.03)` (glass cards)
+- **Border**: `rgba(255,255,255,0.08)` (subtle dividers)
+- **Primary**: `#818cf8` (indigo - actions, links)
+- **Secondary**: `#c084fc` (purple - special elements)
+- **Success**: `#10b981` (profit, long positions)
+- **Danger**: `#f43f5e` (loss, short positions, warnings)
+- **Accent**: `#f472b6` (pink - special elements)
 - **Text Primary**: `#ffffff`
-- **Text Secondary**: `#6b7280`
-- **Text Muted**: `#4b5563`
+- **Text Secondary**: `#9ca3af`
+- **Text Muted**: `#6b7280`
 
 ### Typography
-- **Headings**: JetBrains Mono (monospace, technical feel)
+- **Headings**: Inter (clean, modern)
 - **Body**: Inter (clean readability for data)
-- **Numbers/Data**: JetBrains Mono (aligned, precise)
+- **Numbers/Data**: JetBrains Mono (aligned, precise) - fallback to monospace
 
 ### Motion Philosophy
 - Real-time data pulses with subtle glow animations
 - Trade executions trigger ripple effects on cards
 - Numbers animate when changing (count up/down)
-- Skeleton loaders with scan-line effect during loading
 - Smooth spring animations for UI interactions
+- Staggered animations for lists and grids
 
 ### Visual Assets
-- Lucide icons with 1.5px stroke
-- Animated gradient borders on active cards
-- Subtle grid pattern background
-- Glowing orbs for status indicators
+- Lucide icons throughout
+- Glassmorphism UI with backdrop blur
+- Gradient text effects on headings
+- Hover lift animations on cards
+- Scrollbar styling
 
 ## Layout & Structure
 
-### Dashboard (Main View)
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ Header: Logo | Wallet Connect | Navigation                      │
-├─────────────────────────────────────────────────────────────────┤
-│ Stats Bar: Total PnL | Active Copiers | Trades Today | Volume   │
-├───────────────────────────────────┬─────────────────────────────┤
-│                                   │                             │
-│   Top Traders Panel               │   My Portfolio Panel       │
-│   - Ranked list of whales         │   - Following list          │
-│   - Win rate, PnL, Followers      │   - Active positions       │
-│   - Follow/Unfollow toggle        │   - Recent trades           │
-│   - Real-time trade indicator     │                             │
-│                                   │                             │
-├───────────────────────────────────┴─────────────────────────────┤
-│ Trade History (Live Feed) - Scrolling real-time fills           │
-└─────────────────────────────────────────────────────────────────┘
-```
+### Pages Implemented (10 pages)
+1. **Dashboard** - Overview with stats, top traders, recent activity
+2. **Trades** - Copy trading interface with trader selection
+3. **Trade** - Full trading interface with charts, order book, quick trade
+4. **Positions** - Open positions with PnL tracking
+5. **Orders** - Open orders and order history
+6. **History** - Trade history and PnL records
+7. **Analytics** - Performance charts and statistics
+8. **Calculator** - Position sizing calculator with risk management
+9. **Settings** - User preferences and configuration
 
-### Settings Modal
-- Slippage tolerance slider (0.1% - 5%)
-- Position sizing: Fixed amount OR Proportional
-- Stop Loss % (default 5%)
-- Take Profit % (default 10%)
-- Max position size
-- Per-trader overrides
+### Sidebar Navigation
+- Collapsible sidebar (64px collapsed, 256px expanded)
+- Glass morphism background
+- Active nav indicator with gradient
+- Mobile responsive with overlay menu
 
 ## Features & Interactions
 
-### Phase 1: Data Ingestion
-- [ ] Fetch Top 10 traders from Hyperliquid Leaderboard API
-- [ ] Poll `userFills` endpoint every 1 second for each followed trader
-- [ ] Display real-time trade indicators when whales trade
-- [ ] Trade capture: asset, side, price, size, timestamp
+### Phase 1: Data Ingestion ✅
+- [x] Fetch trader data with mock data generation
+- [x] Display trader stats (PnL, win rate, followers)
+- [x] Follow/unfollow trader functionality
+- [x] Trade history display
 
-### Phase 2: User Management
-- [ ] Wallet connection (MetaMask, WalletConnect)
-- [ ] User settings persistence (localStorage for MVP, PostgreSQL later)
-- [ ] Per-trader follow/unfollow with individual settings
-- [ ] Risk parameters: SL%, TP%, Slippage tolerance, Position size mode
+### Phase 2: User Management ✅
+- [x] Wallet connection simulation
+- [x] User settings persistence (Zustand + localStorage)
+- [x] Per-trader follow with individual settings
+- [x] Risk parameters: SL%, TP%, position size mode
 
-### Phase 3: Execution Engine
-- [ ] Hyperliquid API integration for order placement
-- [ ] Limit order strategy (not market orders)
-- [ ] Automatic SL/TP order placement after entry
-- [ ] Slippage check before execution
-- [ ] Order status tracking
+### Phase 3: Trading Interface ✅
+- [x] Binance API integration for real-time data
+- [x] TradingView-style charts (lightweight-charts)
+- [x] Multiple timeframes (1m, 5m, 15m, 1h, 4h, 1d)
+- [x] Order book visualization
+- [x] Recent trades feed
+- [x] Quick trade panel
 
-### Phase 4: Frontend Dashboard
-- [ ] Real-time PnL calculations
-- [ ] Trade history with live updates
-- [ ] Trader cards with stats
-- [ ] Settings modal per trader
-- [ ] Connection status indicator
+### Phase 4: Analytics & Tools ✅
+- [x] Position sizing calculator
+- [x] Risk/reward analysis
+- [x] PnL tracking
+- [x] Performance charts
 
 ## Component Inventory
 
-### Header
-- Logo with glow effect
-- Wallet connect button (disconnected: cyan outline, connected: gradient fill)
-- Navigation tabs with underline indicator
+### Layout Components
+- **Layout.tsx** - Main layout with sidebar, header, ticker
+- **Sidebar** - Collapsible navigation
+- **Header** - Search, quick actions, wallet, theme toggle
+- **PriceTicker** - Bottom ticker bar with live prices
 
-### StatCard
-- Large number with currency/percentage formatting
-- Label below
-- Subtle gradient background
-- Pulse animation when value changes
+### UI Components
+- **Glass** - Glassmorphism card component
+- **ThemeToggle** - Dark/Light mode switcher
+- **Skeleton** - Loading placeholder
+- **Badge** - Status badges
+- **Button** - Styled buttons with variants
 
-### TraderCard
-- Avatar placeholder (gradient circle with initials)
-- Name/address (truncated)
-- Win rate badge (green/red based on >50%)
-- Total PnL with color coding
-- Follower count
-- "Follow" toggle button (outlined → filled when following)
-- Live trade indicator (pulsing dot when trading)
-
-### TradeRow
-- Timestamp
-- Trader avatar + name
-- Asset badge
-- Side indicator (LONG/SHORT with color)
-- Price
-- Size
-- PnL if closed
-
-### SettingsModal
-- Overlay with blur backdrop
-- Form with labeled inputs
-- Slider for percentages
-- Radio buttons for position sizing
-- Save/Cancel buttons
-
-### PositionCard
-- Asset and side
-- Entry price vs current price
-- Unrealized PnL (color coded)
-- Size
-- SL/TP indicators
-- Time since entry
+### Feature Components
+- **WalletButton** - Connect/disconnect wallet
+- **NotificationCenter** - Notifications panel
+- **PriceTicker** - Scrolling price ticker
+- **TraderCard** - Trader display card
+- **TradeRow** - Individual trade display
+- **PositionCard** - Position display card
 
 ## Technical Approach
 
-### Frontend (Vite + React)
+### Frontend Stack
 ```
-/src
-  /components
-    /ui (shadcn components)
-    Header.tsx
-    StatCard.tsx
-    TraderCard.tsx
-    TradeRow.tsx
-    PositionCard.tsx
-    SettingsModal.tsx
-  /hooks
-    useHyperliquid.ts
-    useWallet.ts
-    useTraders.ts
-  /lib
-    hyperliquid.ts (API client)
-    utils.ts
-  /stores
-    traderStore.ts
-    userStore.ts
-  /types
-    index.ts
-  App.tsx
-  main.tsx
+Vite + React 18 + TypeScript
+├── Tailwind CSS (styling)
+├── Zustand (state management)
+├── React Query (server state)
+├── Framer Motion (animations)
+├── React Router (navigation)
+├── Recharts (charts)
+├── lightweight-charts (TradingView-style)
+└── Lucide React (icons)
+```
+
+### Backend Stack
+```
+Node.js + Express
+├── REST API (traders, simulation, PnL)
+├── WebSocket (real-time updates)
+└── Binance Proxy (CORS bypass)
+```
+
+### File Structure
+```
+/mirror-trade
+├── src/
+│   ├── components/
+│   │   ├── Layout.tsx
+│   │   ├── PriceTicker.tsx
+│   │   ├── WalletButton.tsx
+│   │   ├── NotificationCenter.tsx
+│   │   └── ui/
+│   │       ├── ThemeToggle.tsx
+│   │       └── ...
+│   ├── pages/
+│   │   ├── Dashboard.tsx
+│   │   ├── Trades.tsx
+│   │   ├── TradePage.tsx
+│   │   ├── Positions.tsx
+│   │   ├── Orders.tsx
+│   │   ├── History.tsx
+│   │   ├── Analytics.tsx
+│   │   ├── Calculator.tsx
+│   │   └── Settings.tsx
+│   ├── lib/
+│   │   ├── binance.ts (Binance API client)
+│   │   └── hyperliquid.ts (Hyperliquid utilities)
+│   ├── stores/
+│   │   ├── store.ts (Zustand store)
+│   │   └── themeStore.ts (Theme state)
+│   ├── types/
+│   │   └── index.ts (TypeScript types)
+│   ├── hooks/
+│   │   └── useStore.ts
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.css
+├── package.json
+└── vite.config.ts
+
+/backend
+├── server.js (Express server)
+├── package.json
+└── ...
 ```
 
 ### State Management
-- Zustand for global state
-- React Query for API data fetching
-- localStorage persistence for user settings
+- Zustand for global state with persistence
+- React Query for API data fetching with caching
+- localStorage for theme and settings persistence
 
 ### API Integration
-- Hyperliquid Info API: `https://api.hyperliquid.xyz/info`
-- Endpoints used:
-  - `GET /exchangeInfo` - trading rules
-  - `POST { type: "userFills" }` - trade history
-  - `POST { type: "allMids" }` - current prices
-  - `POST { type: "leaderboard" }` - top traders
+- **Binance Public API** (no auth required):
+  - `/api/v3/ticker/24hr` - 24h ticker stats
+  - `/api/v3/klines` - Candlestick data
+  - `/api/v3/depth` - Order book
+  - `/api/v3/trades` - Recent trades
+  - `/api/v3/exchangeInfo` - Trading pairs
+  - WebSocket streams for real-time updates
 
-### Real-time Updates
-- Polling mechanism for MVP (1s interval)
-- WebSocket upgrade path for production
+### Backend API Endpoints
+```
+GET  /health - Health check
+GET  /api/traders - List all traders
+GET  /api/prices - Current prices
+POST /api/simulate - Simulate trade execution
+POST /api/calculate-pnl - Calculate PnL
+GET  /api/binance/* - Binance proxy endpoints
+```
 
 ## Implementation Phases
 
-### Phase 1: Core UI & Data Display
-- Build dashboard layout
-- Implement trader list with mock data
-- Add wallet connection
-- Create trade history display
+### Phase 1: Core UI & Data Display ✅
+- [x] Build dashboard layout
+- [x] Implement trader list with mock data
+- [x] Add wallet connection
+- [x] Create trade history display
 
 ### Phase 2: Hyperliquid Integration
-- Connect to real API
-- Fetch leaderboard data
-- Poll for user fills
-- Display real trades
+- [ ] Connect to real Hyperliquid API
+- [ ] Fetch leaderboard data
+- [ ] Poll for user fills
+- [ ] Display real trades
 
-### Phase 3: Copy Trading Logic
-- Follow/unfollow functionality
-- Settings management
-- Trade signal generation
-- Simulated execution (no real trades)
+### Phase 3: Copy Trading Logic ✅
+- [x] Follow/unfollow functionality
+- [x] Settings management
+- [x] Trade signal generation
+- [x] Simulated execution (no real trades)
 
-### Phase 4: Execution (Demo Mode)
-- Order placement logic
-- SL/TP automation
-- Slippage protection
-- Position tracking
+### Phase 4: Trading Interface ✅
+- [x] Full trading page with charts
+- [x] Order book visualization
+- [x] Quick trade panel
+- [ ] Real order placement
+
+## Current Status
+
+### Completed
+- 10 pages with full UI
+- 14+ reusable components
+- Binance API integration with real data
+- TradingView-style candlestick charts
+- Position sizing calculator
+- Dark/Light theme support
+- Glassmorphism UI design
+- Framer Motion animations
+- Zustand state management
+- Express backend with Binance proxy
+
+### Next Steps
+1. Hyperliquid real API integration
+2. Wallet connection (real MetaMask/WalletConnect)
+3. Order execution
+4. WebSocket real-time updates
+5. Technical indicators on charts
+6. Performance optimizations

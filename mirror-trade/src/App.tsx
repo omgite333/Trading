@@ -9,6 +9,8 @@ import Positions from './pages/Positions';
 import HistoryPage from './pages/History';
 import Analytics from './pages/Analytics';
 import TradePage from './pages/TradePage';
+import OrdersPage from './pages/Orders';
+import CalculatorPage from './pages/Calculator';
 import SettingsPage from './pages/Settings';
 import './index.css';
 
@@ -34,6 +36,8 @@ export default function App() {
               <Route path="history" element={<HistoryPage />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="trade" element={<TradePage />} />
+              <Route path="orders" element={<OrdersPage />} />
+              <Route path="calculator" element={<CalculatorPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>

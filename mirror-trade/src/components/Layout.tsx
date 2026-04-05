@@ -14,21 +14,27 @@ import {
   Wallet,
   Search,
   Menu,
-  X
+  X,
+  Calculator,
+  ClipboardList
 } from 'lucide-react';
 import { useLocation, Link } from 'react-router-dom';
 import { useStore } from '@/stores/store';
 import { NotificationCenter } from './NotificationCenter';
 import { WalletButton } from './WalletButton';
 import { PriceTicker } from './PriceTicker';
+import { ThemeToggle } from './ui/ThemeToggle';
 import { formatCurrency } from '@/lib/hyperliquid';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/trades', icon: ArrowLeftRight, label: 'Copy Trade' },
+  { path: '/trade', icon: ArrowLeftRight, label: 'Trade' },
   { path: '/positions', icon: Briefcase, label: 'Positions' },
+  { path: '/orders', icon: ClipboardList, label: 'Orders' },
   { path: '/history', icon: History, label: 'History' },
   { path: '/analytics', icon: BarChart3, label: 'Analytics' },
+  { path: '/calculator', icon: Calculator, label: 'Calculator' },
   { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
@@ -178,6 +184,7 @@ export default function Layout() {
                 <ArrowLeftRight className="w-4 h-4" />
                 Trade
               </Link>
+              <ThemeToggle />
               <NotificationCenter />
               <WalletButton />
             </div>
