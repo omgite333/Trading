@@ -2,145 +2,78 @@
 
 ## Concept & Vision
 
-A sleek, professional copy-trading platform that bridges elite Hyperliquid traders with retail users. The interface channels the aesthetic of Bloomberg Terminal meets Cyberpunk — data-dense but visually striking with real-time pulse animations.
+A clean, professional copy-trading platform inspired by Hyperliquid's minimal dark interface. The design prioritizes data clarity and usability with a focus on trading terminal aesthetics.
 
-## Completed Features
+## Design Language (Hyperliquid-Inspired)
 
-### Core Pages (10 pages)
-- [x] **Dashboard** - Overview with stats, top traders, recent activity
-- [x] **Trades** - Copy trading interface with trader selection
-- [x] **TradePage** - Full trading interface with charts, order book, quick trade
-- [x] **Positions** - Open positions with PnL tracking
-- [x] **Orders** - Open orders and order history
-- [x] **History** - Transaction history with filtering and stats
-- [x] **Analytics** - Performance charts and statistics
-- [x] **Calculator** - Position sizing calculator with risk management
-- [x] **Settings** - User preferences and configuration
+### Color Palette
+- **Background**: `#0a0a0b` (deep black)
+- **Surface**: `#131316` (card backgrounds)
+- **Border**: `#2a2a2e` (subtle borders)
+- **Primary**: `#00d4ff` (cyan - actions, links)
+- **Success**: `#00ff88` (profit, long)
+- **Danger**: `#ff3366` (loss, short)
+- **Text**: `#e5e5e5` (primary text)
+- **Muted**: `#666` / `#999` (secondary text)
 
-### Technical Features
-- [x] **Binance API Integration** - Real-time price data, klines, orderbook, trades
-- [x] **TradingView-style Charts** - Candlestick charts with lightweight-charts library
-- [x] **Technical Indicators** - MA, EMA, Bollinger Bands, RSI
-- [x] **Hyperliquid API Client** - Full API integration with React Query
-- [x] **Wallet Connection** - MetaMask integration with chain switching
-- [x] **State Management** - Zustand with localStorage persistence
-- [x] **Theme Toggle** - Dark/Light mode support
-- [x] **Mock Data Generation** - For traders, trades, positions
+### Typography
+- **Font**: Inter (400, 500, 600, 700)
+- **Numbers**: System monospace for tabular data
 
-### Components
-- [x] Layout with collapsible sidebar
-- [x] Header with search, theme toggle, notifications
-- [x] Price ticker bar
-- [x] Wallet button with MetaMask integration
-- [x] Notification center
-- [x] Glass morphism UI cards
-- [x] Theme toggle
-- [x] Skeleton loaders
+### Visual Style
+- Minimal, clean dark interface
+- Subtle borders instead of glass effects
+- Compact spacing for data density
+- Simple hover states
+- No excessive animations
+
+## Pages (10 pages)
+
+| Page | Path | Description |
+|------|------|-------------|
+| Dashboard | `/` | Overview with stats, positions, recent trades |
+| Copy Trade | `/trades` | Browse and follow traders |
+| Trade | `/trade` | Trading interface with charts |
+| Positions | `/positions` | Open positions table |
+| Orders | `/orders` | Order management |
+| History | `/history` | Transaction history |
+| Analytics | `/analytics` | Performance charts |
+| Calculator | `/calculator` | Position sizing |
+| Settings | `/settings` | User preferences |
+
+## Features
+
+### Completed
+- [x] 10 pages with Hyperliquid-inspired UI
+- [x] Binance real-time data integration
+- [x] TradingView-style candlestick charts
+- [x] Order book visualization
+- [x] MetaMask wallet connection
+- [x] Position sizing calculator
+- [x] Copy trading trader selection
+- [x] Dark theme throughout
+
+### Pending
+- [ ] Real Hyperliquid order execution
+- [ ] Copy trading auto-execution
 
 ## Technical Stack
 
-### Frontend
 ```
 Vite + React 18 + TypeScript
-├── Tailwind CSS (styling)
-├── Zustand (state management)
-├── React Query (server state)
-├── Framer Motion (animations)
-├── React Router (navigation)
-├── Recharts (dashboard charts)
-├── lightweight-charts (TradingView-style)
-└── Lucide React (icons)
+├── Tailwind CSS
+├── Zustand (state)
+├── React Query
+├── Framer Motion
+├── React Router
+├── lightweight-charts
+└── Lucide React
 ```
 
-### Backend
+## Running the Project
+
+```bash
+cd mirror-trade
+npm install
+npm run dev
 ```
-Node.js + Express
-├── REST API (traders, simulation, PnL)
-├── WebSocket (real-time updates)
-└── Binance Proxy (CORS bypass)
-```
-
-## API Integration
-
-### Hyperliquid API (`https://api.hyperliquid.xyz/info`)
-- `POST { type: "leaderboard" }` - Top traders
-- `POST { type: "allMids" }` - Current prices
-- `POST { type: "userFills" }` - User trade history
-- `POST { type: "assetList" }` - Available assets
-- `POST { type: "meta" }` - Trading pair metadata
-- `POST { type: "accountSummary" }` - Account data
-- `POST { type: "openOrders" }` - User open orders
-- WebSocket for real-time fills
-
-### Binance API (`https://api.binance.com/api/v3`)
-- `/ticker/24hr` - 24h ticker stats
-- `/klines` - Candlestick data
-- `/depth` - Order book
-- `/trades` - Recent trades
-- `/exchangeInfo` - Trading pairs
-- WebSocket streams for real-time updates
-
-## File Structure
-
-```
-/mirror-trade
-├── src/
-│   ├── components/
-│   │   ├── Layout.tsx
-│   │   ├── PriceTicker.tsx
-│   │   ├── WalletButton.tsx
-│   │   ├── NotificationCenter.tsx
-│   │   ├── Charts.tsx
-│   │   └── ui/
-│   │       ├── ThemeToggle.tsx
-│   │       └── ...
-│   ├── pages/
-│   │   ├── Dashboard.tsx
-│   │   ├── Trades.tsx
-│   │   ├── TradePage.tsx
-│   │   ├── Positions.tsx
-│   │   ├── Orders.tsx
-│   │   ├── History.tsx
-│   │   ├── Analytics.tsx
-│   │   ├── Calculator.tsx
-│   │   └── Settings.tsx
-│   ├── lib/
-│   │   ├── binance.ts
-│   │   └── hyperliquid.ts
-│   ├── stores/
-│   │   ├── store.ts
-│   │   └── themeStore.ts
-│   ├── hooks/
-│   │   ├── useHyperliquid.ts
-│   │   ├── useWallet.ts
-│   │   └── ...
-│   ├── types/
-│   │   └── index.ts
-│   ├── App.tsx
-│   ├── main.tsx
-│   └── index.css
-└── package.json
-
-/backend
-├── server.js
-└── package.json
-```
-
-## Next Steps
-
-### High Priority
-- [ ] Order execution functionality (Hyperliquid exchange API)
-- [ ] WebSocket real-time updates for fills
-- [ ] Copy trading simulation engine
-
-### Medium Priority
-- [ ] More technical indicators (MACD, VWAP, ATR)
-- [ ] Price alerts and notifications
-- [ ] Performance optimizations
-- [ ] Trade history export
-
-### Low Priority
-- [ ] Mobile responsive design improvements
-- [ ] Keyboard shortcuts
-- [ ] Dark/Light mode toggle animations
-- [ ] Trading signals alerts

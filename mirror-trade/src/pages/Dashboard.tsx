@@ -1,27 +1,20 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, Users, Activity, DollarSign, ArrowUpRight, ArrowDownRight, Zap, Eye, EyeOff } from 'lucide-react';
-import { AreaChart, Area, ResponsiveContainer } from 'recharts';
+import { TrendingUp, TrendingDown, Users, Activity, DollarSign, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useStore } from '@/stores/store';
-import { formatCurrency, formatNumber } from '@/lib/hyperliquid';
 
 const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 }
+    transition: { staggerChildren: 0.05 }
   }
 };
 
 const item = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 10 },
   show: { opacity: 1, y: 0 }
 };
-
-const chartData = Array.from({ length: 24 }, (_, i) => ({
-  value: 100 + Math.sin(i * 0.3) * 10 + Math.random() * 5,
-  volume: Math.random() * 1000,
-}));
 
 export default function Dashboard() {
   const { traders, positions, trades } = useStore();
@@ -30,8 +23,8 @@ export default function Dashboard() {
   
   const stats = [
     { label: 'Portfolio Value', value: '$12,458.32', change: '+12.45%', positive: true, icon: DollarSign },
-    { label: 'Total PnL', value: formatCurrency(totalPnl), change: totalPnl >= 0 ? '+8.2%' : '-3.1%', positive: totalPnl >= 0, icon: totalPnl >= 0 ? TrendingUp : TrendingDown },
-    { label: 'Active Copiers', value: formatNumber(followingTraders.length), change: '+2 today', positive: true, icon: Users },
+    { label: 'Total PnL', value: `$${totalPnl.toFixed(2)}`, change: totalPnl >= 0 ? '+8.2%' : '-3.1%', positive: totalPnl >= 0, icon: totalPnl >= 0 ? TrendingUp : TrendingDown },
+    { label: 'Active Copiers', value: followingTraders.length.toString(), change: '+2 today', positive: true, icon: Users },
     { label: 'Copy Volume', value: '$45,231', change: '+23.5%', positive: true, icon: Activity },
   ];
 
@@ -40,168 +33,127 @@ export default function Dashboard() {
       variants={container}
       initial="hidden"
       animate="show"
-      className="space-y-6"
+      className="space-y-4"
     >
       <motion.div variants={item}>
-        <h1 className="text-3xl font-bold mb-2">
-          <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Welcome back
-          </span>
-        </h1>
-        <p className="text-gray-400">Here's your copy trading overview</p>
+        <h1 className="text-xl font-semibold text-white">Dashboard</h1>
+        <p className="text-sm text-[#666]">Your copy trading overview</p>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {stats.map((stat, index) => (
           <motion.div
             key={index}
             variants={item}
-            className="glass rounded-2xl p-6 hover-lift"
+            className="hl-card p-4"
           >
-            <div className="flex items-start justify-between mb-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                stat.positive 
-                  ? 'bg-emerald-500/10 text-emerald-400' 
-                  : 'bg-rose-500/10 text-rose-400'
-              }`}>
-                <stat.icon className="w-6 h-6" />
-              </div>
-              <span className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${
-                stat.positive 
-                  ? 'bg-emerald-500/10 text-emerald-400' 
-                  : 'bg-rose-500/10 text-rose-400'
-              }`}>
-                {stat.positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+            <div className="flex items-center justify-between mb-2">
+              <stat.icon className={`w-4 h-4 ${stat.positive ? 'text-[#00ff88]' : 'text-[#ff3366]'}`} />
+              <span className={`text-xs font-mono ${stat.positive ? 'text-[#00ff88]' : 'text-[#ff33666]'}`}>
                 {stat.change}
               </span>
             </div>
-            <p className="text-2xl font-bold text-white mb-1">{stat.value}</p>
-            <p className="text-sm text-gray-500">{stat.label}</p>
+            <p className="text-xl font-semibold text-white font-mono">{stat.value}</p>
+            <p className="text-xs text-[#666] mt-1">{stat.label}</p>
           </motion.div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <motion.div variants={item} className="lg:col-span-2 glass rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-semibold text-white">Performance</h2>
-              <p className="text-sm text-gray-500">24h portfolio value</p>
-            </div>
-            <select className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-400">
-              <option>24h</option>
-              <option>7d</option>
-              <option>30d</option>
-              <option>All</option>
-            </select>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <motion.div variants={item} className="hl-card p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-white">Top Traders</h2>
           </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#818cf8" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#818cf8" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#818cf8"
-                  strokeWidth={2}
-                  fill="url(#colorValue)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
-
-        <motion.div variants={item} className="glass rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Top Traders</h2>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {traders.slice(0, 5).map((trader, i) => (
-              <div key={trader.id} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-medium">
-                    {trader.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  {i === 0 && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-yellow-400 flex items-center justify-center text-[8px] text-black font-bold">
-                      1
-                    </div>
-                  )}
+              <div key={trader.id} className="flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors cursor-pointer">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1f1f24] to-[#2a2a2e] flex items-center justify-center text-white text-xs font-medium">
+                  {trader.name.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-white truncate">{trader.name}</p>
-                  <p className="text-xs text-gray-500">{formatNumber(trader.followers)} followers</p>
+                  <p className="text-xs text-[#666]">{trader.followers.toLocaleString()} followers</p>
                 </div>
                 <div className="text-right">
-                  <p className={`text-sm font-semibold ${trader.totalPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <p className={`text-sm font-semibold font-mono ${trader.totalPnl >= 0 ? 'text-[#00ff88]' : 'text-[#ff3366]'}`}>
                     {trader.totalPnl >= 0 ? '+' : ''}${(trader.totalPnl / 1000).toFixed(1)}K
                   </p>
-                  <p className="text-xs text-gray-500">{trader.winRate}% WR</p>
+                  <p className="text-xs text-[#666]">{trader.winRate}% WR</p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div variants={item} className="hl-card p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-white">Recent Trades</h2>
+          </div>
+          <div className="space-y-2">
+            {trades.slice(0, 6).map((trade, i) => (
+              <div key={trade.id || i} className="flex items-center gap-3 p-2 rounded hover:bg-white/5 transition-colors">
+                <div className={`w-8 h-8 rounded flex items-center justify-center ${
+                  trade.side === 'Long' ? 'bg-[#00ff88]/10 text-[#00ff88]' : 'bg-[#ff3366]/10 text-[#ff3366]'
+                }`}>
+                  {trade.side === 'Long' ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm text-white">
+                    <span className="font-medium">{trade.traderName}</span>
+                    <span className="text-[#999] ml-1">{trade.side}</span>
+                    <span className="text-[#00d4ff] ml-1">{trade.asset}</span>
+                  </p>
+                  <p className="text-xs text-[#666]">${trade.price.toFixed(2)} × {trade.size}</p>
+                </div>
+                <span className="text-xs text-[#666]">
+                  {new Date(trade.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
               </div>
             ))}
           </div>
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div variants={item} className="glass rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Recent Activity</h2>
-          <div className="space-y-4">
-            {trades.slice(0, 5).map((trade, i) => (
-              <motion.div
-                key={trade.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="flex items-center gap-4 p-3 rounded-xl bg-white/5"
-              >
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  trade.side === 'Long' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-                }`}>
-                  {trade.side === 'Long' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-white">
-                    <span className="font-medium">{trade.traderName}</span>
-                    <span className="text-gray-500"> {trade.side.toLowerCase()}</span>
-                    <span className="text-indigo-400 font-medium ml-1">{trade.asset}</span>
-                  </p>
-                  <p className="text-xs text-gray-500">${trade.price.toFixed(2)} × {trade.size}</p>
-                </div>
-                <span className="text-xs text-gray-500">
-                  {new Date(trade.timestamp).toLocaleTimeString()}
-                </span>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        <motion.div variants={item} className="glass rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { icon: Users, label: 'Find Traders', color: 'from-indigo-500 to-indigo-600' },
-              { icon: Eye, label: 'Watch List', color: 'from-purple-500 to-purple-600' },
-              { icon: Activity, label: 'Copy Trade', color: 'from-pink-500 to-pink-600' },
-              { icon: DollarSign, label: 'Deposit', color: 'from-emerald-500 to-emerald-600' },
-            ].map((action, i) => (
-              <motion.button
-                key={i}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`p-4 rounded-xl bg-gradient-to-r ${action.color} text-white font-medium shadow-lg hover:shadow-xl transition-shadow flex items-center gap-3`}
-              >
-                <action.icon className="w-5 h-5" />
-                {action.label}
-              </motion.button>
-            ))}
-          </div>
-        </motion.div>
-      </div>
+      <motion.div variants={item} className="hl-card p-4">
+        <h2 className="text-sm font-medium text-white mb-4">Your Positions</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="table-header">
+                <th className="text-left table-cell">Asset</th>
+                <th className="text-left table-cell">Side</th>
+                <th className="text-right table-cell">Size</th>
+                <th className="text-right table-cell">Entry</th>
+                <th className="text-right table-cell">Current</th>
+                <th className="text-right table-cell">PnL</th>
+              </tr>
+            </thead>
+            <tbody>
+              {positions.map((pos) => (
+                <tr key={pos.id} className="border-t border-[#2a2a2e] hover:bg-white/5">
+                  <td className="table-cell font-medium text-white">{pos.asset}</td>
+                  <td className={`table-cell ${pos.side === 'Long' ? 'text-[#00ff88]' : 'text-[#ff3366]'}`}>
+                    {pos.side}
+                  </td>
+                  <td className="table-cell text-right font-mono">{pos.size}</td>
+                  <td className="table-cell text-right font-mono text-[#999]">${pos.entryPrice.toFixed(2)}</td>
+                  <td className="table-cell text-right font-mono text-white">${pos.currentPrice.toFixed(2)}</td>
+                  <td className={`table-cell text-right font-mono ${pos.unrealizedPnl >= 0 ? 'text-[#00ff88]' : 'text-[#ff3366]'}`}>
+                    {pos.unrealizedPnl >= 0 ? '+' : ''}{pos.pnlPercent.toFixed(2)}%
+                  </td>
+                </tr>
+              ))}
+              {positions.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="table-cell text-center text-[#666] py-8">
+                    No open positions
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
