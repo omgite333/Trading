@@ -306,12 +306,6 @@ class HyperliquidClient {
   }
 }
 
-function formatAddress(address: string): string {
-  if (!address) return 'Unknown';
-  if (address.length <= 12) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-}
-
 function getMockPrices(): Record<string, string> {
   return {
     'HYPE': '35.42',
@@ -354,7 +348,7 @@ function generateMockLeaderboard(): Trader[] {
 export const hyperliquid = new HyperliquidClient();
 
 export function formatAddress(address: string): string {
-  if (!address) return '';
+  if (!address) return 'Unknown';
   if (address.length <= 12) return address;
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
