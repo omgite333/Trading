@@ -3,21 +3,12 @@ import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, X, Settings } from 'lucide-react';
 import { useWalletStore } from '@/stores/walletStore';
 import { useTrading } from '@/hooks/useTrading';
-import { binance, type Ticker } from '@/lib/binance';
-import { useEffect, useState } from 'react';
 
 export default function Positions() {
   const { positions, totalPnl, balances } = useWalletStore();
   const { executeSell, coverShort } = useTrading();
-  const [tickers, setTickers] = useState<Map<string, Ticker>>(new Map());
 
-  useEffect(() => {
-    binance.getTickers().then(data => {
-      const map = new Map<string, Ticker>();
-      data.forEach(t => map.set(t.symbol, t));
-      setTickers(map);
-    });
-  }, []);
+  const usdtBalance = balances.find(b => b.asset === 'USDT')?.free || 0;
 
   const formatPrice = (price: number) => {
     if (price >= 1000) return price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -27,8 +18,6 @@ export default function Positions() {
   const formatPercent = (num: number) => {
     return num >= 0 ? `+${num.toFixed(2)}%` : `${num.toFixed(2)}%`;
   };
-
-  const usdtBalance = balances.find(b => b.asset === 'USDT')?.free || 0;
 
   return (
     <div className="space-y-4">
@@ -72,12 +61,9 @@ export default function Positions() {
           </thead>
           <tbody>
             {positions.map((pos) => {
-              const ticker = tickers.get(pos.symbol);
-              const currentPrice = ticker?.price || pos.currentPrice;
-              const pnl = pos.side === 'LONG'
-                ? (currentPrice - pos.entryPrice) * pos.quantity
-                : (pos.entryPrice - currentPrice) * pos.quantity;
-              const pnlPercent = (pnl / (pos.entryPrice * pos.quantity)) * 100;
+              const currentPrice = pos.currentPrice;
+              const pnl = pos.unrealizedPnl;
+              const pnlPercent = pos.unrealizedPnlPercent;
 
               return (
                 <tr key={pos.id} className="border-t border-[#2a2a2e] hover:bg-white/5">
