@@ -6,7 +6,7 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Trades from './pages/Trades';
 import Positions from './pages/Positions';
-import History from './pages/History';
+import HistoryPage from './pages/History';
 import Analytics from './pages/Analytics';
 import TradePage from './pages/TradePage';
 import './index.css';
@@ -30,7 +30,7 @@ export default function App() {
               <Route index element={<Dashboard />} />
               <Route path="trades" element={<Trades />} />
               <Route path="positions" element={<Positions />} />
-              <Route path="history" element={<History />} />
+              <Route path="history" element={<HistoryPage />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="trade" element={<TradePage />} />
             </Route>

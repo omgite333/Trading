@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { History, TrendingUp, TrendingDown, Search, Filter, Download, Calendar, ChevronDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { History as HistoryIcon, TrendingUp, TrendingDown, Search, Filter, Download, Calendar, ChevronDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useStore } from '@/stores/store';
 import { formatCurrency, formatNumber } from '@/lib/hyperliquid';
 
-export default function History() {
+export default function HistoryPage() {
   const { trades, positions } = useStore();
   const [search, setSearch] = useState('');
   const [assetFilter, setAssetFilter] = useState('all');
@@ -187,7 +187,7 @@ export default function History() {
 
         {filteredHistory.length === 0 && (
           <div className="p-12 text-center">
-            <History className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+            <HistoryIcon className="w-12 h-12 text-gray-600 mx-auto mb-4" />
             <p className="text-gray-400">No history found</p>
           </div>
         )}
