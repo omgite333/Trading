@@ -14,10 +14,20 @@ const queryClient = new QueryClient({
   },
 });
 
-document.documentElement.classList.add(useTheme.getState().theme);
+function ThemeInitializer() {
+  const { theme } = useTheme();
+  
+  React.useEffect(() => {
+    document.documentElement.classList.remove('dark', 'light');
+    document.documentElement.classList.add(theme);
+  }, [theme]);
+
+  return null;
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
+    <ThemeInitializer />
     <QueryClientProvider client={queryClient}>
       <App />
     </QueryClientProvider>
