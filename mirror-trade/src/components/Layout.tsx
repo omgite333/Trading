@@ -20,6 +20,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { useStore } from '@/stores/store';
 import { NotificationCenter } from './NotificationCenter';
 import { WalletButton } from './WalletButton';
+import { PriceTicker } from './PriceTicker';
 import { formatCurrency } from '@/lib/hyperliquid';
 
 const navItems = [
@@ -28,6 +29,7 @@ const navItems = [
   { path: '/positions', icon: Briefcase, label: 'Positions' },
   { path: '/history', icon: History, label: 'History' },
   { path: '/analytics', icon: BarChart3, label: 'Analytics' },
+  { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 
 export default function Layout() {
@@ -182,9 +184,11 @@ export default function Layout() {
           </div>
         </header>
 
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-6 pb-20">
           <Outlet />
         </main>
+
+        <PriceTicker />
       </div>
     </div>
   );
